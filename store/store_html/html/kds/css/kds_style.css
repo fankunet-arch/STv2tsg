@@ -35,6 +35,16 @@ body{
 }
 .kds-left-header{margin-bottom:1.5rem;}
 
+/* START: Scan Button Style */
+#btn-scan-qr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+#btn-scan-qr:hover {
+  background-color: var(--bg-deeper);
+}
+/* END: Scan Button Style */
+
 .kds-cup-number{font-size:3rem;font-weight:900;color:var(--brand-500);line-height:1;margin-top:.25rem; margin-bottom: 0.5rem;}
 .kds-info-display{background:var(--bg);border-radius:.6rem;padding:.55rem .8rem;font-size:.92rem;margin-bottom:1rem;font-weight:700;border:1px solid var(--line);display:block;color:var(--ink-900);}
 

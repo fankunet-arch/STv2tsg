@@ -1,7 +1,48 @@
 /* TopTea · KDS — SOP 兜底绑定器（与主脚本同风格渲染）
  * [V2 修复] 调整 card，将数量和单位合并到 kds-measurement 容器中，实现在同一行显示。
  * [V3 修复] 调整卡片布局为 col-4 (一行3个)，并缩小图片和标题的内联样式。
+ * [V4] 添加扫码功能 (startScan)
+ * [V4.1] 修复 onScanSuccess，去除扫码结果中多余的引号
  */
+
+/**
+ * [V4.1] 扫码成功的回调 (必须是全局函数)
+ * @param {string} code 扫描到的二维码内容
+ */
+window.onScanSuccess = function(code) {
+    if (code) {
+        // START OF FIX (V4.1)
+        // 净化扫码结果，去除前后可能存在的引号
+        let sanitizedCode = String(code).trim();
+        if (sanitizedCode.startsWith('"') && sanitizedCode.endsWith('"')) {
+            // 如果字符串以 " 开头并以 " 结尾，则去除它们
+            sanitizedCode = sanitizedCode.substring(1, sanitizedCode.length - 1);
+        }
+        // END OF FIX (V4.1)
+        
+        const $input = $("#sku-input, #kds_code_input").first();
+        const $form = $("#sku-search-form");
+        if ($input.length && $form.length) {
+            $input.val(sanitizedCode); // <-- 使用净化后的 code
+            $form.trigger('submit'); // 触发submit事件
+        }
+    }
+};
+
+/**
+ * [V4] 扫码失败或取消的回调 (必须是全局函数)
+ * @param {string} message 错误信息
+ */
+window.onScanError = function(message) {
+    // 此时 showKdsAlert 可能还未加载，使用原生 alert 作为后备
+    if (typeof showKdsAlert === 'function') {
+        showKdsAlert("扫码失败: " + message, true);
+    } else {
+        alert("扫码失败: " + message);
+    }
+};
+
+
 (function () {
   if (window.__KDS_SOP_FALLBACK__) return;
   window.__KDS_SOP_FALLBACK__ = true;
@@ -105,6 +146,28 @@
   }
 
   bindTabs();
+
+  // [V10] 绑定扫码按钮
+  $(document).on("click", "#btn-scan-qr", function() {
+      if (window.AndroidBridge && typeof window.AndroidBridge.startScan === 'function') {
+          try {
+              // 调用安卓接口，并指定全局回调函数的名字
+              window.AndroidBridge.startScan('onScanSuccess', 'onScanError');
+          } catch (e) {
+              if (typeof showKdsAlert === 'function') {
+                  showKdsAlert("调用扫码功能失败: " + e.message, true);
+              } else {
+                  alert("调用扫码功能失败: " + e.message);
+              }
+          }
+      } else {
+          if (typeof showKdsAlert === 'function') {
+              showKdsAlert("扫码功能不可用。请在 TopTea 安卓设备上使用。", true);
+          } else {
+              alert("扫码功能不可用。请在 TopTea 安卓设备上使用。");
+          }
+      }
+  });
 
   if($form.length){
     $form.on('submit', function(e){

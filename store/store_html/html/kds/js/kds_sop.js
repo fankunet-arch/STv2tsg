@@ -1,5 +1,5 @@
 /**
- * TopTea · KDS · SOP (修复版 v9)
+ * TopTea · KDS · SOP (修复版 v10.1)
  * - 修复：在 fetchSop 的 error/fail 路径中，将 waiting 文本重置为初始状态。
  * - 修复：将 $.ajax.done/fail 中的 alert() 替换为 showKdsAlert(msg, true)。
  * - 修复：根据要求修改右上角提示语 (tip_waiting) 的内容。
@@ -16,7 +16,49 @@
  * - [V7 修复] 调整 renderLeft 函数，使其正确显示杯型 (cup_name)。
  * - [V8 修复] 调整 cardHTML，将数量和单位合并到 kds-measurement 容器中，实现在同一行显示。
  * - [V9 修复] 调整卡片布局为 col-4 (一行3个)，并缩小图片和标题的内联样式。
+ * - [V10] 添加扫码功能 (startScan)
+ * - [V10.1] 修复 onScanSuccess，去除扫码结果中多余的引号
  */
+
+/**
+ * [V10.1] 扫码成功的回调 (必须是全局函数)
+ * @param {string} code 扫描到的二维码内容 (可能包含引号)
+ */
+window.onScanSuccess = function(code) {
+    if (code) {
+        // START OF FIX (V10.1)
+        // 净化扫码结果，去除前后可能存在的引号
+        let sanitizedCode = String(code).trim();
+        if (sanitizedCode.startsWith('"') && sanitizedCode.endsWith('"')) {
+            // 如果字符串以 " 开头并以 " 结尾，则去除它们
+            sanitizedCode = sanitizedCode.substring(1, sanitizedCode.length - 1);
+        }
+        // END OF FIX (V10.1)
+
+        const $input = $("#sku-input, #kds_code_input").first();
+        const $form = $("#sku-search-form");
+        if ($input.length && $form.length) {
+            $input.val(sanitizedCode); // <-- 使用净化后的 code
+            $form.trigger('submit'); // 触发KDS已有的submit事件
+        } else {
+            console.error("onScanSuccess: 找不到输入框或表单。");
+        }
+    }
+};
+
+/**
+ * [V10] 扫码失败或取消的回调 (必须是全局函数)
+ * @param {string} message 错误信息
+ */
+window.onScanError = function(message) {
+    if (typeof showKdsAlert === 'function') {
+        showKdsAlert("扫码失败: " + message, true);
+    } else {
+        alert("扫码失败: " + message);
+    }
+};
+
+
 $(function () {
   "use strict";
 
@@ -596,6 +638,20 @@ $(function () {
   removeLegacyHints();
   // [V6 修复] 初始状态由 HTML 决定，JS不再调用 resetCardContainers
   // resetCardContainers(); 
+
+  // [V10] 绑定扫码按钮
+  $(document).on("click", "#btn-scan-qr", function() {
+      if (window.AndroidBridge && typeof window.AndroidBridge.startScan === 'function') {
+          try {
+              // 调用安卓接口，并指定全局回调函数的名字
+              window.AndroidBridge.startScan('onScanSuccess', 'onScanError');
+          } catch (e) {
+              showKdsAlert("调用扫码功能失败: " + e.message, true);
+          }
+      } else {
+          showKdsAlert("扫码功能不可用。请在 TopTea 安卓设备上使用。", true);
+      }
+  });
 
   // 表单提交 / 回车查询
   if ($form.length) {
