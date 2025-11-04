@@ -1,16 +1,30 @@
 <?php
 /**
  * TopTea POS - Main Entry Point
- * Engineer: Gemini | Date: 2025-10-30
- * Revision: 3.5 (Enhance Top Bar User Info Display)
+ * Engineer: Gemini | Date: 2025-11-04
+ * Revision: 5.2 (Ghost Shift Guardian)
+ *
+ * [GEMINI GHOST_SHIFT_FIX v5.2]:
+ * 1. Re-added data-i18n-key="force_start_body" to the modal paragraph.
+ * shift.js and main.js will now coordinate translation and variable injection.
+ *
+ * [GEMINI GHOST_SHIFT_FIX v5.1]:
+ * 1. Added language switcher dropdown to #forceStartShiftModal header for i18n consistency.
+ *
+ * [GEMINI GHOST_SHIFT_FIX v5.0]:
+ * 1. Added new modal #forceStartShiftModal for ghost shift scenario.
+ *
+ * [GEMINI SIF_DR_FIX]:
+ * 1. Added new modal #sifDeclarationModal at the end of the body.
+ * 2. Added new button #btn_show_sif_declaration in settings panel.
  *
  * [FIX 2.0 - HTML]
  * 1. 修复 #customizeOffcanvas 中的 DOM ID，使其与 ui.js 脚本匹配。
  * 2. 移除硬编码的冰量/糖量选项，为 Gating 逻辑让出容器。
- * - #customize_variants_list -> #variant_selector_list
- * - (无ID) -> #ice_selector_list (清空)
- * - (无ID) -> #sugar_selector_list (清空)
- * - #customize_price -> #custom_item_price
+ *
+ * [FIX 4.1 - UI (Definitive)]
+ * 1. 移除 #opsOffcanvas 和 #settingsOffcanvas 上的 h-75 类。
+ * 2. 为 #opsOffcanvas 和 #settingsOffcanvas 添加内联样式 style="height: auto;"
  */
 
 // This MUST be the first include. It checks if the user is logged in.
@@ -90,9 +104,10 @@ $cache_version = time();
     </div>
   </div>
 
-  <div class="offcanvas offcanvas-bottom offcanvas-sheet h-75" tabindex="-1" id="opsOffcanvas"><div class="offcanvas-header"><h5 class="offcanvas-title" data-i18n="ops_panel">功能面板</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><div class="row g-3">
+  <div class="offcanvas offcanvas-bottom offcanvas-sheet" tabindex="-1" id="opsOffcanvas" style="height: auto;"><div class="offcanvas-header"><h5 class="offcanvas-title" data-i18n="ops_panel">功能面板</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><div class="row g-3">
+    <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_shift_end"><i class="bi bi-person-check d-block fs-2 mb-2"></i><span data-i18n="shift_handover">交接班</span></button></div>
     <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_txn_query"><i class="bi bi-clock-history d-block fs-2 mb-2"></i><span data-i18n="txn_query">交易查询</span></button></div>
-    <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_eod"><i class="bi bi-calendar-check d-block fs-2 mb-2"></i><span data-i18n="eod">日结</span></button></div>
+    <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_eod"><i class="bi bi-calendar-check d-block fs-2 mb-2"></i><span data-i1m="eod">日结</span></button></div>
     <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_holds"><i class="bi bi-inboxes d-block fs-2 mb-2"></i><span data-i18n="holds">挂起单</span></button></div>
     <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" data-bs-toggle="offcanvas" data-bs-target="#settingsOffcanvas"><i class="bi bi-gear d-block fs-2 mb-2"></i><span data-i18n="settings">设置</span></button></div>
   </div></div></div>
@@ -164,7 +179,9 @@ $cache_version = time();
     </div>
   </div>
 
-  <div class="offcanvas offcanvas-bottom offcanvas-sheet" tabindex="-1" id="settingsOffcanvas"><div class="offcanvas-header"><h5 class="offcanvas-title" data-i18n="settings">设置</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><div class="list-group"><div class="list-group-item"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="setting_peak_mode"><label class="form-check-label" for="setting_peak_mode" data-i18n="peak_mode">高峰模式 (对比增强)</label></div><small class="form-text text-muted" data-i18n="peak_mode_desc">左侧菜单变白，并在前方功能按钮保留返回图示，避免误操。</small></div><div class="list-group-item"><div class="form-check"><input class="form-check-input" type="radio" name="hand_mode" id="setting_lefty_mode" value="lefty-mode"><label class="form-check-label" for="setting_lefty_mode" data-i18n="lefty_mode">左手模式 (点菜按钮靠左)</label></div></div><div class="list-group-item"><div class="form-check"><input class="form-check-input" type="radio" name="hand_mode" id="setting_righty_mode" value="righty-mode"><label class="form-check-label" for="setting_righty_mode" data-i18n="righty_mode">右手模式 (点菜按钮靠右)</label></div></div></div></div></div>
+  <div class="offcanvas offcanvas-bottom offcanvas-sheet" tabindex="-1" id="settingsOffcanvas" style="height: auto;"><div class="offcanvas-header"><h5 class="offcanvas-title" data-i18n="settings">设置</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><div class="list-group"><div class="list-group-item"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="setting_peak_mode"><label class="form-check-label" for="setting_peak_mode" data-i18n="peak_mode">高峰模式 (对比增强)</label></div><small class="form-text text-muted" data-i18n="peak_mode_desc">左侧菜单变白，并在前方功能按钮保留返回图示，避免误操。</small></div><div class="list-group-item"><div class="form-check"><input class="form-check-input" type="radio" name="hand_mode" id="setting_lefty_mode" value="lefty-mode"><label class="form-check-label" for="setting_lefty_mode" data-i1E="lefty_mode">左手模式 (点菜按钮靠左)</label></div></div><div class="list-group-item"><div class="form-check"><input class="form-check-input" type="radio" name="hand_mode" id="setting_righty_mode" value="righty-mode"><label class="form-check-label" for="setting_righty_mode" data-i18n="righty_mode">右手模式 (点菜按钮靠右)</label></div></div>
+  <div class="list-group-item"><button type="button" class="btn btn-link text-decoration-none px-0" id="btn_show_sif_declaration">查看合规性声明 (Ver Declaración Responsable)</button></div>
+  </div></div></div>
 
   <div class="offcanvas offcanvas-end offcanvas-sheet" tabindex="-1" id="txnQueryOffcanvas"><div class="offcanvas-header"><h5 class="offcanvas-title" data-i18n="txn_query">交易查询</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body p-0" id="txn_list_container"></div></div>
 
@@ -222,6 +239,34 @@ $cache_version = time();
     </div>
   </div>
 
+  <div class="modal fade" id="forceStartShiftModal" tabindex="-1" aria-labelledby="forceStartShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-sheet">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title text-dark" id="forceStartShiftModalLabel" data-i18n="force_start_title">操作提醒：发现未结束的班次</h5>
+          <div class="dropdown ms-auto">
+              <button class="btn btn-outline-dark btn-sm dropdown-toggle px-2" data-bs-toggle="dropdown" id="lang_toggle_modal_force"><span class="flag">🇨🇳</span></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item active" href="#" data-lang="zh"><span class="flag">🇨🇳</span> 中文</a></li>
+                  <li><a class="dropdown-item" href="#" data-lang="es"><span class="flag">🇪🇸</span> Español</a></li>
+              </ul>
+          </div>
+        </div>
+        <div class="modal-body">
+          <p id="force_start_body" data-i18n-key="force_start_body">系统检测到班次 (属于: {user}) 未正确交接。您必须强制结束该班次，才能开始您的新班次。</p>
+          <form id="force_start_shift_form">
+            <div class="form-floating">
+              <input type="number" class="form-control" id="force_starting_float" placeholder="您的初始备用金" step="0.01" min="0" required>
+              <label for="force_starting_float" data-i18n="force_start_label">您的初始备用金 (€)</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" form="force_start_shift_form" class="btn btn-danger w-100" data-i18n="force_start_submit">强制交班并开始我的新班次</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-sheet">
@@ -276,11 +321,11 @@ $cache_version = time();
               <tr><td>现金流入</td><td class="text-end" id="eod_cash_in">€0.00</td></tr>
               <tr><td>现金流出</td><td class="text-end" id="eod_cash_out">€0.00</td></tr>
               <tr><td>现金退款</td><td class="text-end" id="eod_cash_refunds">€0.00</td></tr>
-              <tr class="table-light"><td>理论应有现金</td><td class="text-end fw-bold" id="eod_expected_cash">€0.00</td></tr>
-              <tr><td>清点现金</td><td class="text-end fw-bold" id="eod_counted_cash">€0.00</td></tr>
+              <tr class="table-light"><td>理论应有现金</td><td class="text-end" id="eod_expected_cash">€0.00</td></tr>
+              <tr><td>清点现金</td><td class="text-end" id="eod_counted_cash">€0.00</td></tr>
               <tr class="table-light">
                 <td>现金差异</td>
-                <td class="text-end fw-bold" id="eod_cash_diff">€0.00</td>
+                <td class="text-end" id="eod_cash_diff">€0.00</td>
               </tr>
             </tbody>
           </table>
@@ -302,7 +347,7 @@ $cache_version = time();
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div class_ = "table-responsive">
+        <div class="table-responsive">
           <table class="table table-sm" id="eodHistoryTable">
             <thead>
               <tr>
@@ -377,6 +422,22 @@ $cache_version = time();
   </div>
 </div>
 
+<div class="modal fade" id="sifDeclarationModal" tabindex="-1" aria-labelledby="sifDeclarationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content modal-sheet">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sifDeclarationModalLabel">Declaración Responsable (SIF)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="sif_declaration_content" style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.8rem;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="sys_toast" class="toast" role="alert"><div class="toast-body" id="toast_msg"></div></div></div>
 
 <script type="module" src="./assets/js/main.js?v=<?php echo $cache_version; ?>"></script>

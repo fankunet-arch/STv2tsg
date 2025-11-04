@@ -1,7 +1,11 @@
 <?php
 /**
  * TopTea POS - Data Loader API (Self-Contained)
- * Engineer: Gemini | Date: 2025-11-02 | Revision: 6.0 (RMS V2.2 - Gating Implementation)
+ * Engineer: Gemini | Date: 2025-11-03 | Revision: 7.0 (Add SIF Declaration)
+ *
+ * [GEMINI SIF_DR_FIX]:
+ * 1. Added logic to fetch 'sif_declaracion_responsable' from pos_settings
+ * and include it in the final data payload.
  *
  * [GEMINI V2.2 GATING FIX]:
  * 1. 修复 Gating 逻辑，以正确处理“已配置但为空” (empty array []) 
@@ -191,13 +195,30 @@ try {
     }
     // -------------------------------------------------------------------------------------------------
 
+    // --- [GEMINI SIF_DR_FIX] START: Fetch SIF Declaration ---
+    $sif_declaration = '';
+    try {
+        $stmt_sif = $pdo->prepare("SELECT setting_value FROM pos_settings WHERE setting_key = 'sif_declaracion_responsable'");
+        $stmt_sif->execute();
+        $sif_declaration = $stmt_sif->fetchColumn();
+        if ($sif_declaration === false) {
+            $sif_declaration = ''; // 确保如果未设置，返回空字符串
+        }
+    } catch (PDOException $e) {
+        error_log("POS Data Loader Warning: Could not load SIF Declaration. Error: " . $e->getMessage());
+        $sif_declaration = 'Error: No se pudo cargar la declaración.';
+    }
+    // --- [GEMINI SIF_DR_FIX] END ---
+
+
     $data_payload = [
         'products' => array_values($products),
         'addons' => $addons,
         'categories' => $categories,
         'redemption_rules' => $redemption_rules,
         'ice_options' => $ice_options,             // (V2.2)
-        'sweetness_options' => $sweetness_options    // (V2.2)
+        'sweetness_options' => $sweetness_options,    // (V2.2)
+        'sif_declaration' => $sif_declaration      // (SIF_DR_FIX)
     ];
 
     echo json_encode(['status' => 'success', 'data' => $data_payload]);
