@@ -14,7 +14,7 @@
  */
 
 import { STATE } from './state.js';
-import { t, fmtEUR } from './utils.js';
+import { t, fmtEUR, toast } from './utils.js';
 
 const lang = () => STATE.lang || 'zh';
 
@@ -26,6 +26,12 @@ export function openCustomize(productId) {
     const product = STATE.products.find(p => p.id === productId);
     if (!product) {
         console.error("Product not found:", productId);
+        return;
+    }
+
+    // [估清 需求1] 检查商品是否已估清
+    if (product.is_sold_out) {
+        toast('该商品已估清'); // 未来可以替换为 t()
         return;
     }
 
@@ -227,9 +233,18 @@ export function renderProducts() {
 
     filteredProducts.forEach(p => {
         const defaultVariant = p.variants.find(v => v.is_default) || p.variants[0];
+        
+        // [估清 需求1] 检查 is_sold_out 状态
+        const isSoldOut = (p.is_sold_out === 1 || p.is_sold_out === true);
+        const soldOutClass = isSoldOut ? 'product-card-sold-out' : '';
+        const soldOutBadge = isSoldOut ? '<span class="badge bg-danger position-absolute top-0 start-0 m-2">估清</span>' : '';
+        // [估清 需求1] 添加 disabled 属性
+        const disabledAttr = isSoldOut ? 'disabled' : '';
+
         $grid.append(`
             <div class="col">
-                <div class="product-card" data-id="${p.id}">
+                <div class="product-card ${soldOutClass}" data-id="${p.id}" ${disabledAttr}>
+                    ${soldOutBadge}
                     <div class="product-title mb-1">${lang() === 'es' ? p.title_es : p.title_zh}</div>
                     <div class="product-price text-brand">${fmtEUR(defaultVariant.price_eur)}</div>
                 </div>
@@ -248,7 +263,8 @@ export function refreshCartUI() {
     if (STATE.cart.length === 0) {
         $cartItems.html(`<div class="alert alert-sheet">${t('tip_empty_cart')}</div>`);
         $cartFooter.hide();
-        $('#cart_badge').text('0').hide();
+        // [修复问题3] ID 从 #cart_badge 修正为 #cart_count
+        $('#cart_count').text('0');
         return;
     }
 
@@ -284,7 +300,8 @@ export function refreshCartUI() {
     $('#cart_final_total').text(fmtEUR(final_total));
     
     $cartFooter.show();
-    $('#cart_badge').text(STATE.cart.length).show();
+    // [修复问题3] ID 从 #cart_badge 修正为 #cart_count
+    $('#cart_count').text(STATE.cart.length);
 }
 
 /**
@@ -367,5 +384,21 @@ export function applyI18N() {
     $('[data-i18n-placeholder]').each(function () {
         const key = $(this).data('i1im-placeholder');
         $(this).attr('placeholder', t(key));
+    });
+
+    // [修复问题1的I18N] 动态翻译新增的模态框
+    // (因为它们是静态HTML，所以此函数会捕获它们)
+    document.querySelectorAll('[data-i18n-key]').forEach(el => {
+        const key = el.getAttribute('data-i18n-key');
+        const translation = t(key);
+        if (translation && translation !== key) {
+            // 特殊处理带 <strong> 的 P1
+            if (key === 'availability_decision_p1') {
+                const count = document.getElementById('sold_out_snapshot_count')?.textContent || '0';
+                el.innerHTML = translation.replace('<strong id="sold_out_snapshot_count">0</strong>', `<strong id="sold_out_snapshot_count">${count}</strong>`);
+            } else {
+                el.textContent = translation;
+            }
+        }
     });
 }

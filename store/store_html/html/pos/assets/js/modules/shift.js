@@ -159,7 +159,17 @@ export async function handleStartShift(e) {
     if (resp.ok && result.status === 'success') {
       HAS_ACTIVE_SHIFT = true;
       try { startShiftModal?.hide(); } catch(_) {}
-      await checkShiftStatus(); 
+      
+      // [估清 需求3] 检查是否需要弹窗
+      if (result.data && result.data.prompt_sold_out_decision === true) {
+          document.getElementById('sold_out_snapshot_count').textContent = result.data.snapshot_item_count || 0;
+          const decisionModal = new bootstrap.Modal(document.getElementById('soldOutDecisionModal'));
+          decisionModal.show();
+      } else {
+          // 正常流程，直接刷新状态
+          await checkShiftStatus(); 
+      }
+      
       toast(t('shift_start_success') || '已开始当班');
     } else {
       toast(`${t('shift_start_fail')}: ${result.message || `HTTP ${resp.status}`}`);
@@ -192,7 +202,17 @@ export async function handleForceStartShift(e) {
             HAS_ACTIVE_SHIFT = true;
             STATE.ghostShiftInfo = null; // 清理幽灵信息
             try { forceStartShiftModal?.hide(); } catch(_) {}
-            await checkShiftStatus(); 
+            
+            // [估清 需求3] 检查是否需要弹窗
+            if (result.data && result.data.prompt_sold_out_decision === true) {
+                document.getElementById('sold_out_snapshot_count').textContent = result.data.snapshot_item_count || 0;
+                const decisionModal = new bootstrap.Modal(document.getElementById('soldOutDecisionModal'));
+                decisionModal.show();
+            } else {
+                // 正常流程，直接刷新状态
+                await checkShiftStatus(); 
+            }
+
             toast(t('shift_start_success') || '已开始当班');
         } else {
             toast(`${t('shift_start_fail')}: ${result.message || `HTTP ${resp.status}`}`);

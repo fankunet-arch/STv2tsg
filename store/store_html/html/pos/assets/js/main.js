@@ -121,7 +121,19 @@ Object.assign(I18N_NS.zh, {
   force_start_title: '操作提醒：发现未结束的班次',
   force_start_body: '系统检测到班次 (属于: {user}) 未正确交接。您必须强制结束该班次，才能开始您的新班次。',
   force_start_label: '您的初始备用金 (€)',
-  force_start_submit: '强制交班并开始我的新班次'
+  force_start_submit: '强制交班并开始我的新班次',
+  
+  // [修复问题1] 添加估清相关的 I18N
+  availability_panel: '商品估清',
+  availability_title: '商品估清管理',
+  availability_desc: '在此处关闭商品将使其在点餐界面显示为“估清”且不可点。此状态将在每日自动重置。',
+  availability_decision_title: '交接班估清确认',
+  availability_decision_p1: '上一班次有 <strong id="sold_out_snapshot_count">0</strong> 个商品处于“估清”状态。',
+  availability_decision_p2: '请选择如何处理这些商品的库存状态：',
+  availability_decision_keep: '继续估清',
+  availability_decision_keep_desc: '保持上一班次的状态',
+  availability_decision_reset: '全部重新上架',
+  availability_decision_reset_desc: '将所有商品设为可售'
 });
 Object.assign(I18N_NS.es, {
    no_addons_available: 'No hay extras disponibles',
@@ -180,7 +192,19 @@ Object.assign(I18N_NS.es, {
   force_start_title: 'Aviso: Turno anterior no cerrado',
   force_start_body: 'El sistema detectó que el turno (de: {user}) no se cerró correctamente. Debe forzar el cierre de ese turno para iniciar el suyo.',
   force_start_label: 'Su fondo de caja inicial (€)',
-  force_start_submit: 'Forzar Cierre y Empezar Mi Turno'
+  force_start_submit: 'Forzar Cierre y Empezar Mi Turno',
+
+  // [修复问题1] 添加估清相关的 I18N
+  availability_panel: 'Gestión de Stock',
+  availability_title: 'Gestión de Stock (Agotados)',
+  availability_desc: 'Desactivar un producto aquí lo marcará como "Agotado" en la pantalla de pedidos. Este estado se reiniciará automáticamente cada día.',
+  availability_decision_title: 'Confirmar Stock de Turno',
+  availability_decision_p1: 'El turno anterior dejó <strong id="sold_out_snapshot_count">0</strong> productos marcados como "Agotado".',
+  availability_decision_p2: '¿Cómo desea proceder con el estado de estos productos?',
+  availability_decision_keep: 'Mantener Agotados',
+  availability_decision_keep_desc: 'Mantener el estado del turno anterior',
+  availability_decision_reset: 'Reponer Todo',
+  availability_decision_reset_desc: 'Marcar todos los productos como disponibles'
 });
 
 /**
@@ -222,16 +246,16 @@ function showUnclosedEodOverlay(unclosedDate) {
         <div class="eod-block-content" style="background-color: var(--surface-1, #fff); color: var(--ink, #111); border-radius: 0.8rem; box-shadow: 0 8px 30px rgba(0,0,0,0.2); width: 100%; max-width: 500px; overflow: hidden;">
             <div class="eod-block-header" style="background-color: #ffc107; color: #000; padding: 0.8rem 1rem; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.3rem;"></i>
-                <span>${t('unclosed_eod_title')}</span>
+                <span data-i18n-key="unclosed_eod_title">${t('unclosed_eod_title')}</span>
             </div>
             <div class="eod-block-body" style="padding: 1.5rem; text-align: center;">
-                <h4 style="margin-bottom: 0.75rem; font-weight: 600;">${t('unclosed_eod_header')}</h4>
-                <p style="margin-bottom: 0.5rem;">${t('unclosed_eod_message').replace('{date}', `<strong>${unclosedDate}</strong>`)}</p>
-                <p class="text-muted small" style="margin-bottom: 0.5rem; color: #6c757d;">${t('unclosed_eod_instruction')}</p>
+                <h4 style="margin-bottom: 0.75rem; font-weight: 600;" data-i18n-key="unclosed_eod_header">${t('unclosed_eod_header')}</h4>
+                <p style="margin-bottom: 0.5rem;" data-i18n-key="unclosed_eod_message">${t('unclosed_eod_message').replace('{date}', `<strong>${unclosedDate}</strong>`)}</p>
+                <p class="text-muted small" style="margin-bottom: 0.5rem; color: #6c757d;" data-i18n-key="unclosed_eod_instruction">${t('unclosed_eod_instruction')}</p>
             </div>
             <div class="eod-block-footer" style="padding: 0.8rem 1rem; background-color: var(--surface-2, #f1f1f1); border-top: 1px solid var(--border, #ccc); display: flex; justify-content: space-between; gap: 0.5rem;">
-                <button type="button" class="btn btn-secondary" disabled>${t('unclosed_eod_force_button')}</button>
-                <button type="button" class="btn btn-primary" id="btn_eod_now_overlay">${t('unclosed_eod_button')}</button>
+                <button type="button" class="btn btn-secondary" disabled data-i18n-key="unclosed_eod_force_button">${t('unclosed_eod_force_button')}</button>
+                <button type="button" class="btn btn-primary" id="btn_eod_now_overlay" data-i18n-key="unclosed_eod_button">${t('unclosed_eod_button')}</button>
             </div>
         </div>
     `;
@@ -369,8 +393,147 @@ function bindEvents() {
   });
   // --- [GEMINI SIF_DR_FIX] END ---
 
+  // --- [估清 需求 1 & 3] ---
+  $document.on('click', '#btn_open_availability_panel', openAvailabilityPanel);
+  $document.on('change', '#availability_list_container .form-check-input', handleAvailabilityToggle);
+  $document.on('click', '#btn_sold_out_decision_keep', handleSoldOutDecisionKeep);
+  $document.on('click', '#btn_sold_out_decision_reset', handleSoldOutDecisionReset);
+  // --- [估清] 结束 ---
+
+
   console.log("Event bindings complete."); 
 }
+
+// [新] 处理估清决策：保持
+async function handleSoldOutDecisionKeep() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('soldOutDecisionModal'));
+    if (modal) modal.hide();
+    // 刷新主界面（加载商品列表，此时估清状态仍然是上一班的）
+    await fetchInitialData();
+    // 重新渲染UI
+    renderCategories();
+    renderProducts();
+    await checkShiftStatus(); // 确保UI解锁
+    toast('已保持估清状态');
+}
+
+// [新] 处理估清决策：重置
+async function handleSoldOutDecisionReset() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('soldOutDecisionModal'));
+    if (modal) modal.hide();
+    
+    try {
+        // 1. 调用API重置
+        const response = await fetch('api/pos_availability_handler.php?action=reset_all', { 
+            method: 'GET', // 使用 GET 或 POST 均可，取决于API设计
+            credentials: 'same-origin' 
+        });
+        const result = await response.json();
+        if (result.status !== 'success') throw new Error(result.message);
+        
+        // 2. 重新加载所有数据（此时 is_sold_out 将全部为 0）
+        await fetchInitialData();
+        // 重新渲染UI
+        renderCategories();
+        renderProducts();
+        await checkShiftStatus(); // 确保UI解锁
+        toast('所有商品已重新上架');
+        
+    } catch (error) {
+        toast('重置失败: ' + error.message);
+        await checkShiftStatus(); // 即使失败也要解锁UI
+    }
+}
+
+// [新] 打开估清面板
+async function openAvailabilityPanel() {
+    const opsOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('opsOffcanvas'));
+    if (opsOffcanvas) opsOffcanvas.hide();
+
+    const modal = new bootstrap.Modal(document.getElementById('availabilityModal'));
+    const container = document.getElementById('availability_list_container');
+    container.innerHTML = '<div class="text-center p-4"><div class="spinner-border"></div></div>';
+    modal.show();
+
+    try {
+        const response = await fetch('api/pos_availability_handler.php?action=get_all', { credentials: 'same-origin' });
+        const result = await response.json();
+        if (result.status !== 'success') throw new Error(result.message);
+
+        const items = result.data;
+        if (items.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">没有可管理的商品。</div>';
+            return;
+        }
+
+        let html = '';
+        items.forEach(item => {
+            const name = STATE.lang === 'es' ? item.name_es : item.name_zh;
+            const isSoldOut = parseInt(item.is_sold_out, 10) === 1;
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        <span class="fw-bold">${name}</span>
+                        <small class="text-muted d-block">${item.product_code || 'N/A'}</small>
+                    </span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" 
+                               data-id="${item.menu_item_id}" 
+                               ${isSoldOut ? 'checked' : ''}>
+                        <label class="form-check-label">${isSoldOut ? '已估清' : '可售'}</label>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+    } catch (error) {
+        container.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    }
+}
+
+// [新] 处理估清切换
+async function handleAvailabilityToggle(event) {
+    const toggle = event.target;
+    const label = toggle.nextElementSibling;
+    const menu_item_id = parseInt(toggle.dataset.id, 10);
+    const is_sold_out = toggle.checked ? 1 : 0;
+
+    toggle.disabled = true;
+    if (label) label.textContent = '保存中...';
+
+    try {
+        const response = await fetch('api/pos_availability_handler.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'toggle',
+                menu_item_id: menu_item_id,
+                is_sold_out: is_sold_out
+            })
+        });
+        const result = await response.json();
+        if (result.status !== 'success') throw new Error(result.message);
+
+        // 成功，更新本地 STATE
+        const product = STATE.products.find(p => p.id === menu_item_id);
+        if (product) {
+            product.is_sold_out = is_sold_out;
+        }
+        
+        // 重新渲染主界面的产品网格
+        renderProducts(); 
+
+    } catch (error) {
+        toast('更新失败: ' + error.message);
+        toggle.checked = !is_sold_out; // 恢复原状
+    } finally {
+        toggle.disabled = false;
+        if (label) label.textContent = is_sold_out ? '已估清' : '可售';
+    }
+}
+
 
 async function initApplication() {
     console.log("initApplication started.");
@@ -410,11 +573,15 @@ async function initApplication() {
         
         const opsBody = document.querySelector('#opsOffcanvas .offcanvas-body');
         if (opsBody) {
+            // [修复问题1] 修正了 估清按钮 的 span，添加了 data-i18n
              opsBody.innerHTML = `<div class="row g-3">
                 <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_shift_end"><i class="bi bi-person-check d-block fs-2 mb-2"></i><span data-i18n="shift_handover">交接班</span></button></div>
                 <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_txn_query"><i class="bi bi-clock-history d-block fs-2 mb-2"></i><span data-i18n="txn_query">交易查询</span></button></div>
-                <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_eod"><i class="bi bi-calendar-check d-block fs-2 mb-2"></i><span data-i1m="eod">日结</span></button></div>
+                <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_eod"><i class="bi bi-calendar-check d-block fs-2 mb-2"></i><span data-i18n="eod">日结</span></button></div>
                 <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_holds"><i class="bi bi-inboxes d-block fs-2 mb-2"></i><span data-i18n="holds">挂起单</span></button></div>
+                
+                <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" id="btn_open_availability_panel"><i class="bi bi-slash-circle d-block fs-2 mb-2"></i><span data-i18n="availability_panel">商品估清</span></button></div>
+
                 <div class="col-6 col-md-3"><button class="btn btn-outline-ink w-100 py-3" data-bs-toggle="offcanvas" data-bs-target="#settingsOffcanvas"><i class="bi bi-gear d-block fs-2 mb-2"></i><span data-i18n="settings">设置</span></button></div>
               </div>`;
         }
